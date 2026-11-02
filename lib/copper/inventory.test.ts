@@ -29,7 +29,9 @@ describe("readInventory", () => {
   beforeEach(() => createStatelessClient.mockReset());
 
   it("returns every row from the inventory table", async () => {
-    createStatelessClient.mockReturnValue(fakeClient({ data: [row], error: null }));
+    createStatelessClient.mockReturnValue(
+      fakeClient({ data: [row], error: null }),
+    );
     expect(await readInventory()).toEqual([row]);
   });
 
@@ -46,7 +48,9 @@ describe("readInventory", () => {
   });
 
   it("returns null when the request itself throws", async () => {
-    createStatelessClient.mockReturnValue(fakeClient(new Error("network down")));
+    createStatelessClient.mockReturnValue(
+      fakeClient(new Error("network down")),
+    );
     expect(await readInventory()).toBeNull();
   });
 });

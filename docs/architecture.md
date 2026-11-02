@@ -85,3 +85,21 @@ When a module changes how the app fits together, add a section here:
 **Risks and open questions:** cost, privacy, accuracy or safety risks, and how
 you handle them.
 ```
+
+## Module 2: Ask Copper (shopping chatbot)
+
+| Piece | Where | What it does |
+|---|---|---|
+| Page / route | `app/page.tsx` (no new routes) | Mounts the chat and passes `isAiConfigured()` down as a prop |
+| Components | `components/copper/ask-copper.tsx`, `ask-copper-steps.tsx` | The launcher and side panel, and the stations and tool cards that show each answer's steps |
+| Tools | `lib/copper/assistant/tools.ts` | `get_products`, `get_prices`, `calculate_cost`, `check_availability`: ordinary code the model can ask the app to run. Prices come from the catalog, never typed in |
+| Instructions | `lib/copper/assistant/instructions.ts` | Copper's plain-English instructions, sent only when "Use tools" is on |
+| Server Action | `lib/copper/assistant/ask.ts` | `askCopper()` streams the answer and returns a live `Progress` the panel redraws |
+| Data | Supabase table `inventory` (`supabase/migrations/`, `supabase/seed.sql`) | Live stock, read by `readInventory()`. Publicly readable, writable by nobody through the publishable key |
+| AI calls | `lib/ai/call.ts` (`callStream`, module 2, feature `ask-copper`) | Gemini answers with up to 5 steps. Logged to `ai_calls` |
+
+**Data flow:** shopper question → panel → `askCopper()` → Gemini → (optionally) a tool → catalog or Supabase `inventory` → streamed steps and reply back to the panel.
+
+**Decisions and trade-offs:** Tools on and tools off are two separate chats, so the tools-off model can't copy an answer the tools worked out. Stock lives in a database, not the repo, so a manager can change it without a deploy. Prices stay in the catalog because they don't change daily.
+
+**Risks and open questions:** The tools only read; nothing can be bought or changed. With tools off, Copper can invent prices, which the panel labels. If Supabase or the AI key is missing, the app shows a setup card or "can't check stock" instead of crashing.
